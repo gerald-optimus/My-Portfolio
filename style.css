@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Menbere:wght@100..700&display=swap');
+body{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    font-family: "Lato", sans-serif;
+}
+
+.navbar{
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.2rem;
+    background: rgba(255, 255, 255, 0.2); !important;  
+    backdrop-filter: blur(10px);
+    padding: 20px 0;
+}
+
+.navbar-dark .navbar-nav .nav-link.active,
+.navbar-dark .navbar-nav .nav-link:focus,
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: #ffffff; /* or #8f1ddb if purple is intentional */
+}
+
+
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* take up full screen height */
+    text-align: center;
+    background: url('./background.jpg') no-repeat center center/cover; /* optional background */
+}
+
+.profile-pic {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 30px;
+    margin-top: 100px;
+}
+
+.hero h5 {
+    margin: 10px 0 5px;
+    font-weight: normal;
+}
+
+.hero h1 {
+    margin: 0;
+    font-size: 2.5rem;
+}
+
+.hero p {
+    margin-top: 5px;
+    color: gray;
+    font-size: 1.2rem;
+}
+
+#contact .form-control:focus {
+  border-color: #7a007a;
+  box-shadow: 0 0 5px rgba(122, 0, 122, 0.5);
+}
+
+.icon-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+{
+  scroll-padding-top: 100px; /* height of navbar */
+  scroll-behavior: smooth;
+}
+.navbar-brand img {
+  height: 40px;
+}

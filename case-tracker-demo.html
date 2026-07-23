@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCKT-002 — Case Tracker | Gerald De lemos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --ink:#0F1720; --panel:#16212C; --panel-2:#1D2A36;
+    --fog:#8B98A5; --paper:#ECE9E2; --amber:#D9A441; --teal:#4F9C8F; --rust:#C1554A;
+    --line:rgba(236,233,226,0.09);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--ink); color:var(--paper); font-family:'IBM Plex Sans', sans-serif; line-height:1.6; min-height:100vh;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+
+  .console-bar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 32px; border-bottom:1px solid var(--line);
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--fog);
+  }
+  .back-link{text-decoration:none; color:var(--fog);}
+  .back-link:hover{color:var(--amber);}
+
+  main{max-width:1040px; margin:0 auto; padding:40px 32px 80px;}
+
+  .eyebrow{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--amber); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px;}
+  h1{font-family:'IBM Plex Mono', monospace; font-size:clamp(24px,3.6vw,32px); font-weight:600; margin-bottom:10px;}
+  .subtext{color:var(--fog); font-size:14.5px; max-width:680px; margin-bottom:26px;}
+
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;}
+  #search{
+    flex:1; min-width:200px; background:var(--panel); border:1px solid var(--line); border-radius:4px;
+    color:var(--paper); font-family:'IBM Plex Sans', sans-serif; font-size:14px; padding:11px 14px;
+  }
+  #search:focus{outline:none; border-color:var(--amber);}
+  #search::placeholder{color:var(--fog);}
+
+  select{
+    background:var(--panel); border:1px solid var(--line); border-radius:4px;
+    color:var(--paper); font-family:'IBM Plex Mono', monospace; font-size:12.5px; padding:10px 12px;
+  }
+
+  .btn{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600;
+    padding:11px 16px; border-radius:4px; border:1px solid var(--line);
+    background:var(--panel); color:var(--paper); cursor:pointer; white-space:nowrap;
+    transition:all .12s ease;
+  }
+  .btn:hover{border-color:var(--fog);}
+  .btn-primary{background:var(--amber); color:var(--ink); border-color:var(--amber);}
+  .btn-primary:hover{opacity:0.9;}
+  .btn-teal{background:var(--teal); color:var(--ink); border-color:var(--teal);}
+  .btn-teal:hover{opacity:0.9;}
+
+  .result-count{font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--fog); margin-bottom:12px;}
+
+  .table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:4px;}
+  table{width:100%; border-collapse:collapse; min-width:820px;}
+  thead th{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--fog); text-align:left; padding:12px 14px; background:var(--panel-2); border-bottom:1px solid var(--line);
+  }
+  tbody td{padding:12px 14px; border-bottom:1px solid var(--line); font-size:13.5px; vertical-align:top;}
+  tbody tr{background:var(--panel);}
+  tbody tr:hover{background:var(--panel-2);}
+  .tid{font-family:'IBM Plex Mono', monospace; color:var(--fog); font-size:12px;}
+
+  .badge{font-family:'IBM Plex Mono', monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; padding:4px 9px; border-radius:20px; display:inline-block;}
+  .status-open{background:rgba(193,85,74,0.15); color:var(--rust); border:1px solid rgba(193,85,74,0.35);}
+  .status-progress{background:rgba(217,164,65,0.15); color:var(--amber); border:1px solid rgba(217,164,65,0.35);}
+  .status-resolved{background:rgba(79,156,143,0.15); color:var(--teal); border:1px solid rgba(79,156,143,0.35);}
+
+  select.inline-edit{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:3px; color:var(--paper);
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; padding:5px 7px;
+  }
+  textarea.notes-edit{
+    width:100%; min-width:160px; background:var(--panel-2); border:1px solid var(--line); border-radius:3px;
+    color:var(--paper); font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; padding:6px 8px; resize:vertical; min-height:36px;
+  }
+
+  .sync-panel{
+    margin-top:30px; background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:20px 22px;
+  }
+  .sync-header{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;}
+  .sync-title{font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--amber); text-transform:uppercase; letter-spacing:0.08em;}
+  .sync-note{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--fog); margin-bottom:12px;}
+  .sync-log{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--fog);
+    max-height:160px; overflow-y:auto; border-top:1px solid var(--line); padding-top:10px;
+  }
+  .sync-log div{padding:4px 0; border-bottom:1px dashed rgba(236,233,226,0.06);}
+  .sync-log .ok{color:var(--teal);}
+</style>
+</head>
+<body>
+
+<div class="console-bar">
+  <a class="back-link" href="index.html">← Back to queue</a>
+  <span>TCKT-002 · SANDBOX DATA</span>
+</div>
+
+<main>
+  <div class="eyebrow">Live Demo</div>
+  <h1>Case Tracker with Salesforce Sync</h1>
+  <p class="subtext">
+    Sample rebuild of a case tracker used to manage tickets outside Salesforce — status and priority
+    are editable inline, notes are saved per ticket, and the table exports directly to Excel.
+    The Salesforce sync below is simulated for demo purposes. All tickets shown are sample data.
+  </p>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Search by ticket ID, subject, or app...">
+    <select id="statusFilter">
+      <option value="All">All statuses</option>
+      <option value="Open">Open</option>
+      <option value="In Progress">In Progress</option>
+      <option value="Resolved">Resolved</option>
+    </select>
+    <button class="btn btn-teal" id="syncBtn">Sync to Salesforce</button>
+    <button class="btn btn-primary" id="exportBtn">Export to Excel</button>
+  </div>
+  <div class="result-count" id="resultCount"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Ticket ID</th><th>Subject</th><th>App</th><th>Priority</th><th>Status</th><th>Assigned</th><th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="sync-panel">
+    <div class="sync-header">
+      <span class="sync-title">Salesforce Sync Log</span>
+    </div>
+    <div class="sync-note">Simulated for portfolio purposes — no live Salesforce connection.</div>
+    <div class="sync-log" id="syncLog"><div>Awaiting first sync...</div></div>
+  </div>
+</main>
+
+<script>
+let tickets = [
+  {id:"CASE-2201", subject:"Traveler unable to submit expense report", app:"Concur", priority:"High", status:"Open", assigned:"Agent 04", notes:""},
+  {id:"CASE-2202", subject:"Okta MFA locked after phone replacement", app:"Okta", priority:"High", status:"In Progress", assigned:"Agent 01", notes:"Awaiting user device confirmation"},
+  {id:"CASE-2203", subject:"Amadeus PNR not appearing after booking", app:"Amadeus", priority:"Medium", status:"In Progress", assigned:"Agent 02", notes:""},
+  {id:"CASE-2204", subject:"Duplicate traveler profile flagged", app:"Cytric", priority:"Low", status:"Resolved", assigned:"Agent 03", notes:"Profiles merged, closed"},
+  {id:"CASE-2205", subject:"Approval stuck in pending for 3 days", app:"Serko/SAVI", priority:"High", status:"Open", assigned:"Agent 01", notes:""},
+  {id:"CASE-2206", subject:"Booking confirmation email not received", app:"Cytric", priority:"Medium", status:"Resolved", assigned:"Agent 04", notes:"Resent manually, confirmed received"},
+  {id:"CASE-2207", subject:"Access request pending manager approval", app:"Okta", priority:"Medium", status:"Open", assigned:"Agent 02", notes:""},
+  {id:"CASE-2208", subject:"Invoice export missing line items", app:"Concur", priority:"Low", status:"In Progress", assigned:"Agent 03", notes:"Checking with finance integrations"},
+  {id:"CASE-2209", subject:"FCM Booking India profile sync delay", app:"FCM Booking India", priority:"Medium", status:"Open", assigned:"Agent 01", notes:""}
+];
+
+const tbody = document.getElementById('tbody');
+const searchEl = document.getElementById('search');
+const statusFilter = document.getElementById('statusFilter');
+const countEl = document.getElementById('resultCount');
+const syncLog = document.getElementById('syncLog');
+
+function statusClass(status){
+  if(status === "Open") return "status-open";
+  if(status === "In Progress") return "status-progress";
+  return "status-resolved";
+}
+
+function render(){
+  const query = searchEl.value.trim().toLowerCase();
+  const statusVal = statusFilter.value;
+
+  const filtered = tickets.filter(t=>{
+    const matchesQuery = query === "" || (t.id + t.subject + t.app).toLowerCase().includes(query);
+    const matchesStatus = statusVal === "All" || t.status === statusVal;
+    return matchesQuery && matchesStatus;
+  });
+
+  countEl.textContent = `${filtered.length} ticket${filtered.length !== 1 ? 's' : ''} shown`;
+
+  tbody.innerHTML = filtered.map(t => `
+    <tr data-id="${t.id}">
+      <td class="tid">${t.id}</td>
+      <td>${t.subject}</td>
+      <td class="mono" style="font-size:12px; color:var(--fog);">${t.app}</td>
+      <td>
+        <select class="inline-edit" data-field="priority">
+          ${["High","Medium","Low"].map(p=>`<option value="${p}" ${t.priority===p?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="inline-edit" data-field="status">
+          ${["Open","In Progress","Resolved"].map(s=>`<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <div style="margin-top:6px;"><span class="badge ${statusClass(t.status)}">${t.status}</span></div>
+      </td>
+      <td class="mono" style="font-size:12px; color:var(--fog);">${t.assigned}</td>
+      <td><textarea class="notes-edit" data-field="notes" rows="2">${t.notes}</textarea></td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('tr').forEach(row=>{
+    const id = row.dataset.id;
+    const ticket = tickets.find(t=>t.id===id);
+
+    row.querySelectorAll('.inline-edit').forEach(el=>{
+      el.addEventListener('change', ()=>{
+        ticket[el.dataset.field] = el.value;
+        render();
+      });
+    });
+    row.querySelector('.notes-edit').addEventListener('input', (e)=>{
+      ticket.notes = e.target.value;
+    });
+  });
+}
+
+searchEl.addEventListener('input', render);
+statusFilter.addEventListener('change', render);
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const exportData = tickets.map(t => ({
+    "Ticket ID": t.id, "Subject": t.subject, "Application": t.app,
+    "Priority": t.priority, "Status": t.status, "Assigned": t.assigned, "Notes": t.notes
+  }));
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Case Tracker");
+  XLSX.writeFile(wb, "case-tracker-demo-export.xlsx");
+});
+
+document.getElementById('syncBtn').addEventListener('click', ()=>{
+  const now = new Date().toLocaleTimeString();
+  const openCount = tickets.filter(t=>t.status!=="Resolved").length;
+  const entry = document.createElement('div');
+  entry.innerHTML = `<span class="ok">[${now}] Sync complete</span> — ${tickets.length} records pushed, ${openCount} open case(s) flagged for follow-up.`;
+  if(syncLog.firstChild && syncLog.firstChild.textContent === "Awaiting first sync..."){
+    syncLog.innerHTML = "";
+  }
+  syncLog.prepend(entry);
+});
+
+render();
+</script>
+</body>
+</html>
